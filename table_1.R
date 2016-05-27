@@ -1,3 +1,24 @@
+### clean the DATABASE
+Full_DB <- DATABASE
+Full_DB$Longitude <- as.numeric(Full_DB$Longitude)
+Full_DB$Latitude <- as.numeric(Full_DB$Latitude)
+full_vector <- as.vector(NULL)
+for (i in seq_along(Full_DB$Latitude)){
+        if (is.na(Full_DB$Longitude[i]) || is.na(Full_DB$Latitude[i])){
+                full_vector <- c(full_vector,i)
+        }
+}
+# remove the records without longitude and or latitude
+Full_DB_LL <- Full_DB[-full_vector,]
+# remove the records older than 50000 years
+Full_DB_LL <- Full_DB_LL[-which(Full_DB_LL$Median_Age > 50000),]
+# add two empty colums to assign color and type of point in the map
+For_map <- matrix(NA,nrow=length(Full_DB_LL$Latitude), ncol=2)
+colnames(For_map) <- c("Map_color", "Map_type")
+Full_DB_map <- cbind(Full_DB_LL, For_map)
+
+
+
 Database <- read.delim(file.choose(), header = T, sep="\t", stringsAsFactors = F)
 Species <- unique(Database$Species)
 
