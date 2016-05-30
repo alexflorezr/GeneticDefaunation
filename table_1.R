@@ -1,21 +1,51 @@
-### clean the DATABASE
-Full_DB <- DATABASE
-Full_DB$Longitude <- as.numeric(Full_DB$Longitude)
-Full_DB$Latitude <- as.numeric(Full_DB$Latitude)
-full_vector <- as.vector(NULL)
-for (i in seq_along(Full_DB$Latitude)){
-        if (is.na(Full_DB$Longitude[i]) || is.na(Full_DB$Latitude[i])){
-                full_vector <- c(full_vector,i)
-        }
-}
-# remove the records without longitude and or latitude
-Full_DB_LL <- Full_DB[-full_vector,]
+rm(list=ls())
+### Table.1 supplementary materials
+
+### Required libraries
+library(stringr)
+
+### Upload the database
+data_dir <- "~/Desktop/PhD/Thesis/Raw_data/Clean_database"
+setwd(data_dir)
+DATABASE <- read.delim("DATABASE_19-05-16.txt", header=T, stringsAsFactors=F)
+alces <- which(DATABASE$Species == c("Alces_alces"))
+equus <- which(DATABASE$Species == c("Equus_caballus"))
+capra <- which(DATABASE$Species == c("Capra_pyrenaica"))
+canis <- which(DATABASE$Species == c("Canis_lupus"))
+DATABASE <- DATABASE[-c(alces,equus,capra, canis),]
+
+
+### Extenal variables
+pleis_holoc_boundary <- 11700
+
 # remove the records older than 50000 years
-Full_DB_LL <- Full_DB_LL[-which(Full_DB_LL$Median_Age > 50000),]
-# add two empty colums to assign color and type of point in the map
-For_map <- matrix(NA,nrow=length(Full_DB_LL$Latitude), ncol=2)
-colnames(For_map) <- c("Map_color", "Map_type")
-Full_DB_map <- cbind(Full_DB_LL, For_map)
+DATABASE <- DATABASE[-which(DATABASE$Mean_Age >= 50000),]
+
+
+
+
+
+Species <- unique(DATABASE$Species)
+Table.1 <- as.data.frame(matrix(nrow=length(Species), ncol=8))
+colnames(Table.1) <- c("Species", "Total samples", "Radiocarbon-dated fossils", 
+                       "DNA Late Pleistocene", "DNA Holocene", "Locus", "Alignment length", 
+                       "Extiction status")
+for(sp in seq_along(Species)){
+        temp_db <- DATABASE[DATABASE$Species == Species[sp],]
+        Table.1$Species[sp] <- species <- str_replace(unique(temp_db$Species),"_", " ")
+        # how many are radiocarbon dated
+        Table.1$`Radiocarbon-dated fossils`[sp] <- temp_lab_code <- sum(nchar(temp_db$Lab_Code) > 1)
+        temp_NO_lab_code <- sum(nchar(temp_db$Lab_Code) < 1)
+        temp_NA_lab_code <- sum(is.na(temp_db$Lab_Code))
+        # how many are aDNA
+        Table.1$`DNA Late Pleistocene`[sp] <- temp_DNA_pleis <- sum(nchar(temp_db$Sequence) > 1 & temp_db$Mean_Age > pleis_holoc_boundary)
+        Table.1$`DNA Holocene`[sp] <- temp_DNA_holoc <- sum(nchar(temp_db$Sequence) > 1 & temp_db$Mean_Age <= pleis_holoc_boundary)
+        # what locus was use
+        Table.1$Locus[sp] <- temp_locus <- unique(temp_db$Loci)[1]
+        temp_length <- paste(as.vector(range(temp_db$Length, na.rm = T)), sep = "-")
+        Table.1$`Alignment length`[sp] <- paste(temp_length[1], temp_length[2], sep = "-")
+}
+
 
 
 

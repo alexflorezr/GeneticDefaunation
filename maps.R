@@ -1,3 +1,4 @@
+rm(list=ls())
 ### maps included in the supplemetary materials
 
 ### Required libraries
