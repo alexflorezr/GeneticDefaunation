@@ -6,14 +6,9 @@ library(stringr)
 
 ### Upload the database
 data_dir <- "~/Desktop/PhD/Thesis/Raw_data/Clean_database"
+#data_dir <- "~/Desktop/"
 setwd(data_dir)
-DATABASE <- read.delim("DATABASE_19-05-16.txt", header=T, stringsAsFactors=F)
-alces <- which(DATABASE$Species == c("Alces_alces"))
-equus <- which(DATABASE$Species == c("Equus_caballus"))
-capra <- which(DATABASE$Species == c("Capra_pyrenaica"))
-canis <- which(DATABASE$Species == c("Canis_lupus"))
-DATABASE <- DATABASE[-c(alces,equus,capra, canis),]
-
+DATABASE <- read.delim("DATABASE_clean.txt", header=T, stringsAsFactors=F)
 
 ### Extenal variables
 pleis_holoc_boundary <- 11700
