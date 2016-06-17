@@ -7,7 +7,7 @@ library(stringr)
 ### Upload the database
 data_dir <- "~/Desktop/PhD/Thesis/Raw_data/Clean_database"
 setwd(data_dir)
-DATABASE <- read.delim("DATABASE_19-05-16.txt", header=T, stringsAsFactors=F)
+DATABASE <- read.delim("DATABASE_16-06-16.txt", header=T, stringsAsFactors=F)
 alces <- which(DATABASE$Species == c("Alces_alces"))
 equus <- which(DATABASE$Species == c("Equus_caballus"))
 capra <- which(DATABASE$Species == c("Capra_pyrenaica"))
@@ -33,6 +33,8 @@ colnames(Table.1) <- c("Species", "Total samples", "Radiocarbon-dated fossils",
 for(sp in seq_along(Species)){
         temp_db <- DATABASE[DATABASE$Species == Species[sp],]
         Table.1$Species[sp] <- species <- str_replace(unique(temp_db$Species),"_", " ")
+        # total samples per species
+        Table.1$`Total samples`[sp] <- dim(temp_db)[1]
         # how many are radiocarbon dated
         Table.1$`Radiocarbon-dated fossils`[sp] <- temp_lab_code <- sum(nchar(temp_db$Lab_Code) > 1)
         temp_NO_lab_code <- sum(nchar(temp_db$Lab_Code) < 1)
@@ -45,41 +47,65 @@ for(sp in seq_along(Species)){
         temp_length <- paste(as.vector(range(temp_db$Length, na.rm = T)), sep = "-")
         Table.1$`Alignment length`[sp] <- paste(temp_length[1], temp_length[2], sep = "-")
 }
+write.table(Table.1, file="Table_1.txt", sep="\t", row.names = F)
 
-
-
-
-Database <- read.delim(file.choose(), header = T, sep="\t", stringsAsFactors = F)
-Species <- unique(Database$Species)
-
-sp <- Database[Database$Species == "Balaena_mysticetus",]
-Sp_temp <- paste(strsplit(unique(sp$Species), split="_")[[1]][1], strsplit(unique(sp$Species), split="_")[[1]][2], sep=" ")
-no_rcdated <- which(nchar(sp$Lab_Code) < 1)
-if(no_rcdated > 0){
-        print(paste("check", no_rcdated))
-}
-points_sp <- cbind(sp$Longitude, sp$Latitude)
-if (sum(is.na(points_sp)) > 0){
-        print(paste("check", which(is.na(points_sp))))
-}
-total_rcdated <- sum(nchar(sp$Lab_Code) > 1)
-
-
-no_data <- which(!nchar(sp$Lab_Code) > 0)
-
-points_sp <- cbind(sp$Longitude, sp$Latitude)
-
-
-seqs <- sum(nchar(sp$Sequence) > 0)
-library(rworldmap)
-newmap <- getMap(resolution = "low")
-plot(newmap, xlim = c(-180, 180), ylim = c(0,90), asp=1)
-points_sp <- cbind(sp$Longitude, sp$Latitude)
-points(sp$Longitude, sp$Latitude, pch=16, col="green")
-dim(points_sp)
-which(is.na(points_sp))
-unique(ca$Dating_Method)
-which(is.na(sp$Lab_Code))
-no_data <- which(!nchar(sp$Lab_Code) > 0)
-sp[which(sp$C14_Age == 44200),]
-points(sp$Longitude, sp$Latitude, pch=16, col="green")
+### Individual variables for the DATABASE
+        ### Species
+        unique(DATABASE$Species)
+                ### the gray whale has to be included in the DATABASE
+        ### Latitude
+                ### How many records with NA
+                table(is.na(DATABASE$Latitude))
+                ### How many records with NA
+                table(DATABASE$Species[which(is.na(DATABASE$Latitude))])
+                ### How many have "" as value
+                length(which(DATABASE$Latitude == ""))
+                DATABASE$Latitude[which(DATABASE$Latitude == "")] <- NA
+        ### Longitude
+                ### How many records with NA
+                table(is.na(DATABASE$Longitude))
+                ### How many records with NA
+                table(DATABASE$Species[which(is.na(DATABASE$Longitude))])
+                ### How many have "" as value
+                sum(DATABASE$Longitude == "")
+                ### is missing data in Latitude and Longitude the same
+                sum(which(is.na(DATABASE$Latitude)) != which(is.na(DATABASE$Latitude)))
+                ### are this samples missing locality information?
+                table(DATABASE$Locality[which(is.na(DATABASE$Latitude))])
+                table(DATABASE$Country[which(is.na(DATABASE$Latitude))])
+                        ### No, they have localities, but not easily to assign
+                ### are all of them sequences?
+                table(nchar(DATABASE$Sequence[which(is.na(DATABASE$Latitude))]) > 1)
+                        ### The majority are sequences, but 35 are not
+                ### which ones are not sequences?
+                table(DATABASE$Species[which(nchar(DATABASE$Sequence[which(is.na(DATABASE$Latitude))]) < 1)])
+                ### all of them are Balaena mysticetus
+        ### What type of labcodes are included in the DATABASE?
+                ### Labcodes == NA (198 with NAs and 3 are "")
+                table(DATABASE$Species[which(is.na(DATABASE$Lab_Code))])
+                length(which(is.na(DATABASE$Lab_Code)))
+                length(which(DATABASE$Lab_Code == ""))
+                table(nchar(DATABASE$Sequence[which(is.na(DATABASE$Lab_Code))]) > 1)
+                table(DATABASE$Dating_Method[which(is.na(DATABASE$Lab_Code[]))])
+                ### all of them are sequences
+                table(DATABASE$Species[which(DATABASE$Lab_Code == "")])
+                table(nchar(DATABASE$Species[which(DATABASE$Lab_Code == "")]) > 1)
+        ### Fixed values for the Dating method (only: C14_AMS, C14, C14_indirect, ESR, Not_a_fossil )
+                table(DATABASE$Dating_Method)
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "[AMS] C14")] <- "C14_AMS"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "AMS C14")] <- "C14_AMS"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "AMS_C14")] <- "C14_AMS"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "C14-Indirect")] <- "C14_indirect"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "indirect")] <- "C14_indirect"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "Modern")] <- "Not_a_fossil"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "C14" & as.numeric(DATABASE$C14_Age) == 0),] <- "Not_a_fossil"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "Mod_sample" & as.numeric(DATABASE$C14_Age) == 0)] <- "Not_a_fossil"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "historical" & as.numeric(DATABASE$C14_Age) == 0)] <- "Not_a_fossil"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "C.a.")] <- "C14"
+                DATABASE$Dating_Method[which(DATABASE$Dating_Method == "OSL")] <- "C14_indirect"
+                
+                
+                DATABASE[which(DATABASE$Dating_Method == "TL"), c(12,13,1,4,15,16)]
+                table(DATABASE$Lab_Code[which(DATABASE$Dating_Method == "")])
+                DATABASE[which(DATABASE$Dating_Method == "Statigraphical"),]
+                
